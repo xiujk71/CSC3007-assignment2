@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<script>
+
+
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 30, bottom: 200, left: 200},
+    width = 700 - margin.left - margin.right,
+    height = 700 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Parse the Data
+d3.json("https://data.gov.sg/api/action/datastore_search?resource_id=83c21090-bd19-4b54-ab6b-d999c251edcf&", function(fetch) {
+  data = fetch.result.records.filter(({year}) => year == 2020);
+  
+  console.log(data)
+
+  // sort data
+  data.sort(function(b, a) {
+    return a.value - b.value;
+  });
+
+  // X axis
+  var x = d3.scaleBand()
+    .range([ 0, width ])
+    .domain(data.map(function(d) { return d.level_2; }))
+    .padding(0.2);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+      .attr("transform", "translate(-10,0)rotate(-45)")
+      .style("text-anchor", "end");
+
+  // Add Y axis
+  var maxHeight = data[0].value
+  var y = d3.scaleLinear()
+    .domain([0, maxHeight])
+    .range([ height, 0]);
+  svg.append("g")
+    .call(d3.axisLeft(y));
+
+  // Bars
+  svg.selectAll("mybar")
+    .data(data)
+    .enter()
+    .append("rect")
+      .attr("x", function(d) { return x(d.level_2); })
+      .attr("y", function(d) { return y(d.value); })
+      .attr("width", x.bandwidth())
+      .attr("height", function(d) { return height - y(d.value); })
+      .attr("fill", "#aaaaaa")
+
+  svg
+    .append("text")
+    .attr("transform", "translate(" + (width / 2) + "," + (0) + ")")
+    .text("Common crimes commited in Singapore 2020")
+    .attr("text-align", "middle");
+
+})
+
+</script>
